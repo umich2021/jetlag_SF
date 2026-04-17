@@ -1,4 +1,5 @@
 import * as Location from "expo-location";
+import { LocationSubscription } from "expo-location";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Platform,
@@ -25,9 +26,12 @@ const SF_CENTER = {
 };
 
 export default function MapScreen() {
-  const mapRef = useRef(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationError, setLocationError] = useState(null);
+  const mapRef = useRef<MapView>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   // Parse all neighborhood WKT strings once on mount
   const parsedNeighborhoods = NEIGHBORHOODS.map((n) => ({
@@ -36,9 +40,9 @@ export default function MapScreen() {
   }));
 
   // ── Location permission + tracking ─────────────────────────────────────────
-  useEffect(() => {
-    let subscription;
+  const subscriptionRef = useRef<LocationSubscription | null>(null);
 
+  useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -47,7 +51,7 @@ export default function MapScreen() {
       }
 
       // Watch position continuously
-      subscription = await Location.watchPositionAsync(
+      subscriptionRef.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
           timeInterval: 3000,
@@ -62,7 +66,7 @@ export default function MapScreen() {
       );
     })();
 
-    return () => subscription?.remove();
+    return () => subscriptionRef.current?.remove();
   }, []);
 
   // ── Recenter button ─────────────────────────────────────────────────────────
@@ -189,7 +193,7 @@ export default function MapScreen() {
  * Converts a hex color + alpha to an rgba string that react-native-maps accepts.
  * e.g. hexToRgba("#7B5EA7", 0.45) => "rgba(123, 94, 167, 0.45)"
  */
-function hexToRgba(hex, alpha) {
+function hexToRgba(hex: string, alpha: number): string {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.substring(0, 2), 16);
   const g = parseInt(clean.substring(2, 4), 16);
