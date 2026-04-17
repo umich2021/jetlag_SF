@@ -23,28 +23,21 @@ export default function LoginScreen() {
 
   const handleSubmit = async () => {
     setError(null);
-
-    if (!teamName.trim() || !password.trim()) {
-      setError("Enter your team name and password.");
+    if (!password.trim()) {
+      setError("Enter your password.");
       return;
     }
 
     setLoading(true);
 
-    // Admin check first
     if (password === ADMIN_PASSWORD) {
       setLoading(false);
       router.replace("/admin" as any);
-      // casting as i haven't done the admin stuff yet
-      // router.replace("/admin");
       return;
     }
 
-    // Captain login
-    const { team, error: loginError } = await captainLogin(
-      teamName.trim(),
-      password,
-    );
+    // match by password only
+    const { team, error: loginError } = await captainLogin(password);
     setLoading(false);
 
     if (loginError) {
@@ -52,19 +45,13 @@ export default function LoginScreen() {
       return;
     }
 
-    // Navigate to map, passing team data via query params
-    // casting it for now
-    // router.replace({
     router.replace({
-      pathname: "/map" as any,
+      pathname: "/(tabs)" as any,
       params: {
-        pathname: "/map",
-        params: {
-          teamId: team.id,
-          teamName: team.name,
-          teamColor: team.color,
-          coinsBalance: team.coins_balance,
-        },
+        teamId: team.id,
+        teamName: team.name,
+        teamColor: team.color,
+        coinsBalance: team.coins_balance,
       },
     });
   };
@@ -82,7 +69,7 @@ export default function LoginScreen() {
 
         {/* Inputs */}
         <View style={styles.form}>
-          <Text style={styles.label}>Team Name</Text>
+          {/* <Text style={styles.label}>Team Name</Text>
           <TextInput
             style={styles.input}
             placeholder="e.g. Red Team"
@@ -91,7 +78,7 @@ export default function LoginScreen() {
             onChangeText={setTeamName}
             autoCapitalize="words"
             returnKeyType="next"
-          />
+          /> */}
 
           <Text style={styles.label}>Password</Text>
           <TextInput
