@@ -32,7 +32,7 @@ export default function LoginScreen() {
 
     if (password === ADMIN_PASSWORD) {
       setLoading(false);
-      router.replace("/admin" as any);
+      router.replace("/(admin)" as any);
       return;
     }
 
