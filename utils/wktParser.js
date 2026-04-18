@@ -101,6 +101,64 @@ function ringToCoords(ringStr) {
 }
 
 /**
+ * Ray casting algorithm — checks if a point is inside a polygon.
+ * Returns true if the point is inside.
+ */
+export function pointInPolygon(point, polygon) {
+  const { latitude: py, longitude: px } = point;
+  let inside = false;
+
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].longitude;
+    const yi = polygon[i].latitude;
+    const xj = polygon[j].longitude;
+    const yj = polygon[j].latitude;
+
+    const intersect =
+      yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+/**
+ * Returns distance in meters between two coordinates.
+ * Uses the Haversine formula.
+ */
+function distanceMeters(a, b) {
+  const R = 6371000;
+  const lat1 = (a.latitude * Math.PI) / 180;
+  const lat2 = (b.latitude * Math.PI) / 180;
+  const dLat = ((b.latitude - a.latitude) * Math.PI) / 180;
+  const dLng = ((b.longitude - a.longitude) * Math.PI) / 180;
+  const x =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+/**
+ * Checks if a point is inside OR within bufferMeters of a polygon boundary.
+ * Use this for the bus-line leniency check.
+ */
+export function isNearPolygon(point, polygon, bufferMeters = 150) {
+  // First check exact point-in-polygon
+  if (pointInPolygon(point, polygon)) return true;
+
+  // Then check if within buffer distance of any polygon edge
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const edgeMidpoint = {
+      latitude: (polygon[i].latitude + polygon[j].latitude) / 2,
+      longitude: (polygon[i].longitude + polygon[j].longitude) / 2,
+    };
+    if (distanceMeters(point, edgeMidpoint) <= bufferMeters) return true;
+  }
+
+  return false;
+}
+
+/**
  * Calculates the centroid of a coordinate array.
  * Used to position labels over polygons.
  */
