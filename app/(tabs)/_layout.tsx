@@ -39,6 +39,15 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="logout"
+        options={{
+          title: "Logout",
+          tabBarIcon: ({ color }) => (
+            <Text style={{ fontSize: 20, color }}>🚪</Text>
+          ),
+        }}
+      />
     </Tabs>
   );
 }

@@ -24,6 +24,7 @@ import {
   subscribeToNeighborhoods,
   updateCaptainLocation,
 } from "../../lib/gameapi";
+import { supabase } from "../../lib/supabase";
 import { getCentroid, isNearPolygon, parseWKT } from "../../utils/wktParser";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -64,6 +65,7 @@ type DepositModal = {
   leaderTotal: number;
   leaderTeamName: string | null;
   myTotal: number;
+  secondTotal: number;
   iControl: boolean;
 };
 
@@ -119,6 +121,7 @@ export default function MapScreen() {
   const [myBalance, setMyBalance] = useState(
     parseInt(params.coinsBalance ?? "0"),
   );
+  const [neighborhoodDeposits, setNeighborhoodDeposits] = useState<any[]>([]);
 
   // ── Load data ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -127,12 +130,16 @@ export default function MapScreen() {
 
   async function loadData() {
     setLoading(true);
-    const [neighborhoodRes] = await Promise.all([
+    const [neighborhoodRes, depositsRes] = await Promise.all([
       getNeighborhoods(),
+      supabase
+        .from("neighborhood_totals")
+        .select("neighborhood_id, team_id, total_coins"),
       loadChallenges(),
     ]);
     if (neighborhoodRes.neighborhoods)
       setNeighborhoods(neighborhoodRes.neighborhoods);
+    if (depositsRes.data) setNeighborhoodDeposits(depositsRes.data);
     const teamData = await getTeamsWithNeighborhoodCount();
     setTeams(teamData);
     setLoading(false);
@@ -211,9 +218,10 @@ export default function MapScreen() {
   // ── Realtime ────────────────────────────────────────────────────────────────
   useEffect(() => {
     const neighborhoodChannel = subscribeToNeighborhoods((updated: any) => {
-      setNeighborhoods((prev) =>
-        prev.map((n) => (n.id === updated.id ? { ...n, ...updated } : n)),
-      );
+      // refetch full data including team color instead of patching
+      getNeighborhoods().then(({ neighborhoods: fresh }) => {
+        if (fresh) setNeighborhoods(fresh);
+      });
       getTeamsWithNeighborhoodCount().then(setTeams);
     });
     const locationChannel = subscribeToCaptainLocations((updated: any) => {
@@ -255,6 +263,7 @@ export default function MapScreen() {
     );
 
     const leaderTotal = leader?.total_coins ?? 0;
+    const secondTotal = sorted[1]?.total_coins ?? 0;
     const leaderTeamName = leader?.teams?.name ?? null;
     const myTotal = myEntry?.total_coins ?? 0;
     const iControl = neighborhood.controlled_by_team_id === params.teamId;
@@ -266,13 +275,18 @@ export default function MapScreen() {
       leaderTeamName,
       myTotal,
       iControl,
+      secondTotal,
     });
   }
 
   function getDepositCap(modal: DepositModal): number {
-    return modal.iControl
-      ? modal.myTotal + DEPOSIT_CAP_BUFFER
-      : modal.leaderTotal + DEPOSIT_CAP_BUFFER;
+    if (modal.iControl) {
+      // defending — stay 10 ahead of second place
+      return modal.secondTotal - modal.myTotal + DEPOSIT_CAP_BUFFER;
+    } else {
+      // attacking — beat the leader by up to 10
+      return modal.leaderTotal + DEPOSIT_CAP_BUFFER - modal.myTotal;
+    }
   }
 
   async function handleDeposit() {
@@ -314,12 +328,22 @@ export default function MapScreen() {
   // ── Parsed neighborhoods ────────────────────────────────────────────────────
   const parsedNeighborhoods = useMemo(
     () =>
-      neighborhoods.map((n) => ({
-        ...n,
-        polygons: parseWKT(n.wkt),
-        color: getTeam(n.teams)?.color ?? DEFAULT_COLOR,
-      })),
-    [neighborhoods],
+      neighborhoods.map((n) => {
+        const allDeposits = neighborhoodDeposits.filter(
+          (d) => d.neighborhood_id === n.id,
+        );
+        const sorted = allDeposits.sort(
+          (a, b) => b.total_coins - a.total_coins,
+        );
+        const leaderTotal = sorted[0]?.total_coins ?? 0;
+        return {
+          ...n,
+          polygons: parseWKT(n.wkt),
+          color: getTeam(n.teams)?.color ?? DEFAULT_COLOR,
+          leaderTotal,
+        };
+      }),
+    [neighborhoods, neighborhoodDeposits],
   );
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -329,6 +353,9 @@ export default function MapScreen() {
       <View style={styles.header}>
         <Text style={styles.headerIcon}>🚆</Text>
         <Text style={styles.headerTitle}>SF Control</Text>
+        <TouchableOpacity onPress={loadData} style={styles.toggleBtn}>
+          <Text style={styles.toggleBtnText}>↺ Refresh</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.toggleBtn}
           onPress={() => setShowCoins((v) => !v)}
@@ -379,7 +406,11 @@ export default function MapScreen() {
                         onPress={() => handleNeighborhoodPress(neighborhood)}
                       >
                         <View style={styles.coinLabel}>
-                          <Text style={styles.coinText}>30 Coins</Text>
+                          <Text style={styles.coinText}>
+                            {neighborhood.leaderTotal > 0
+                              ? `${neighborhood.leaderTotal} Coins`
+                              : "No bids"}
+                          </Text>
                         </View>
                       </Marker>
                     )}
@@ -534,6 +565,17 @@ export default function MapScreen() {
               {depositModal?.leaderTeamName
                 ? ` by ${depositModal.leaderTeamName}`
                 : ""}
+            </Text>
+            {depositModal?.secondTotal > 0 && (
+              <Text style={styles.modalLabel}>
+                Second place:{" "}
+                <Text style={styles.modalValue}>
+                  {depositModal.secondTotal} coins
+                </Text>
+              </Text>
+            )}
+            <Text style={styles.modalLabel}>
+              Our team coins: {depositModal?.myTotal ?? 0} coins(You)
             </Text>
 
             <Text style={styles.modalLabel}>
