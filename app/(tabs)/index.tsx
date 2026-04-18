@@ -89,6 +89,8 @@ export default function MapScreen() {
       getNeighborhoods(),
       getTeamsWithNeighborhoodCount(),
     ]);
+    // console.log("neighborhoods:", JSON.stringify(neighborhoodRes));
+    // console.log("teams:", JSON.stringify(teamRes));
     if (neighborhoodRes.neighborhoods)
       setNeighborhoods(neighborhoodRes.neighborhoods);
     if (teamRes) setTeams(teamRes);
