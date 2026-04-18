@@ -200,14 +200,14 @@ export default function AdminMapScreen() {
       {/* Map */}
       <View
         style={[
-          styles.mapContainer,
+          { height: mapFullscreen ? "100%" : 320 },
           mapFullscreen && {
             position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 20,
+            zIndex: 999,
           },
         ]}
       >
@@ -239,23 +239,25 @@ export default function AdminMapScreen() {
                       tappable
                       onPress={() => handleNeighborhoodPress(neighborhood)}
                     />
-                    {ringIndex === 0 && showCoins && (
-                      <Marker
-                        key={`coin-${neighborhood.id}-${showCoins}`}
-                        coordinate={centroid}
-                        anchor={{ x: 0.5, y: 0.5 }}
-                        tracksViewChanges={false}
-                        onPress={() => handleNeighborhoodPress(neighborhood)}
-                      >
-                        <View style={styles.coinLabel}>
-                          <Text style={styles.coinText}>
-                            {neighborhood.leaderTotal > 0
-                              ? `${neighborhood.leaderTotal} Coins`
-                              : "No bids"}
-                          </Text>
-                        </View>
-                      </Marker>
-                    )}
+                    {ringIndex === 0 &&
+                      showCoins &&
+                      neighborhood.leaderTotal > 0 && (
+                        <Marker
+                          key={`coin-${neighborhood.id}-${showCoins}`}
+                          coordinate={centroid}
+                          anchor={{ x: 0.5, y: 0.5 }}
+                          tracksViewChanges={false}
+                          onPress={() => handleNeighborhoodPress(neighborhood)}
+                        >
+                          <View style={styles.coinLabel}>
+                            <Text style={styles.coinText}>
+                              {neighborhood.leaderTotal > 0
+                                ? `${neighborhood.leaderTotal} Coins`
+                                : "No bids"}
+                            </Text>
+                          </View>
+                        </Marker>
+                      )}
                   </React.Fragment>
                 );
               }),

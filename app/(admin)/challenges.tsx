@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     borderColor: "#333",
   },
   modalClose: { alignSelf: "flex-end", padding: 4, marginBottom: 8 },
-  modalCloseText: { fontSize: 16, color: "#666" },
+  modalCloseText: { fontSize: 20, color: "#666" },
   modalTitle: {
     fontSize: 20,
     fontWeight: "700",
