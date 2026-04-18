@@ -5,9 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
-  Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -26,6 +24,7 @@ import {
 } from "../../lib/gameapi";
 import { supabase } from "../../lib/supabase";
 import { getCentroid, isNearPolygon, parseWKT } from "../../utils/wktParser";
+import { styles } from "./index.styles";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -122,6 +121,7 @@ export default function MapScreen() {
     parseInt(params.coinsBalance ?? "0"),
   );
   const [neighborhoodDeposits, setNeighborhoodDeposits] = useState<any[]>([]);
+  const [mapFullscreen, setMapFullscreen] = useState(false);
 
   // ── Load data ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -367,7 +367,15 @@ export default function MapScreen() {
       </View>
 
       {/* Map */}
-      <View style={styles.mapContainer}>
+      <View style={[styles.mapContainer, mapFullscreen && { height: "100%" }]}>
+        <TouchableOpacity
+          style={styles.fullscreenBtn}
+          onPress={() => setMapFullscreen((v) => !v)}
+        >
+          <Text style={styles.fullscreenBtnText}>
+            {mapFullscreen ? "X" : "⤢"}
+          </Text>
+        </TouchableOpacity>
         {loading ? (
           <View style={styles.mapLoading}>
             <ActivityIndicator color="#4a9eff" size="large" />
@@ -632,164 +640,3 @@ function getTeam(
   if (!teams) return null;
   return Array.isArray(teams) ? teams[0] : teams;
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0f0f0f" },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    paddingTop: Platform.OS === "ios" ? 56 : 16,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#ddd",
-  },
-  headerIcon: { fontSize: 22, marginRight: 8 },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#111",
-    letterSpacing: -0.3,
-    flex: 1,
-  },
-  toggleBtn: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  toggleBtnText: { fontSize: 12, fontWeight: "600", color: "#333" },
-  mapContainer: { height: 320 },
-  map: { flex: 1 },
-  mapLoading: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#1a1a1a",
-  },
-  coinLabel: {
-    backgroundColor: "rgba(0,0,0,0.55)",
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.25)",
-  },
-  coinText: { color: "#fff", fontSize: 13, fontWeight: "600" },
-  challengePin: { alignItems: "center" },
-  challengePinIcon: { fontSize: 22 },
-  challengePinLabel: {
-    backgroundColor: "rgba(0,0,0,0.7)",
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginTop: 2,
-  },
-  challengePinText: { color: "#fff", fontSize: 10, fontWeight: "600" },
-  captainDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    opacity: 0.85,
-  },
-  captainDotInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "rgba(255,255,255,0.9)",
-  },
-  teamsList: { flex: 1, backgroundColor: "#fff" },
-  teamsContent: { padding: 16, paddingBottom: 32 },
-  teamsHeader: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#111",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  teamRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#f7f7f7",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  teamLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  teamColorDot: { width: 12, height: 12, borderRadius: 6 },
-  teamName: { fontSize: 15, fontWeight: "500", color: "#111" },
-  teamStats: { flexDirection: "row", gap: 12 },
-  statPill: { flexDirection: "row", alignItems: "center", gap: 4 },
-  statIcon: { fontSize: 14 },
-  statValue: { fontSize: 14, fontWeight: "600", color: "#333" },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  modalBox: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 24,
-    width: "80%",
-  },
-  modalClose: { position: "absolute", top: 14, right: 14, padding: 4 },
-  modalCloseText: { fontSize: 16, color: "#999" },
-  modalTitle: {
-    fontSize: 13,
-    color: "#999",
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  modalNeighborhoodName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111",
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  modalDivider: { height: 1, backgroundColor: "#eee", marginBottom: 12 },
-  modalLabel: { fontSize: 12, color: "#999", marginBottom: 2 },
-  modalValue: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#111",
-    marginBottom: 10,
-  },
-  modalCap: { color: "#4a9eff", fontWeight: "700" },
-  modalBalance: { fontSize: 13, color: "#666", marginBottom: 12 },
-  modalInputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  modalInput: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#111",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  modalCoinsLabel: { fontSize: 14, color: "#666", fontWeight: "500" },
-  modalSubmit: {
-    backgroundColor: "#4a9eff",
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  modalSubmitText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-});
