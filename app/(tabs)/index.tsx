@@ -82,9 +82,9 @@ const DEPOSIT_CAP_BUFFER = 10;
 const LOCATION_UPDATE_INTERVAL = 5000;
 
 const CHALLENGE_ICONS: Record<string, string> = {
-  fixed: "📌",
-  variable: "⚡",
-  steal: "💀",
+  fixed: "✔️",
+  variable: "❓",
+  steal: "🥷",
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -351,8 +351,8 @@ export default function MapScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerIcon}>🚆</Text>
-        <Text style={styles.headerTitle}>SF Control</Text>
+        <Text style={styles.headerIcon}></Text>
+        <Text style={styles.headerTitle}>Muni Mayhem</Text>
         <TouchableOpacity onPress={loadData} style={styles.toggleBtn}>
           <Text style={styles.toggleBtnText}>↺ Refresh</Text>
         </TouchableOpacity>

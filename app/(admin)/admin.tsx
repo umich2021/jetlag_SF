@@ -335,7 +335,7 @@ export default function AdminScreen() {
       {/* Team picker modal */}
       <Modal visible={showTeamPicker} transparent animationType="slide">
         <View style={styles.pickerOverlay}>
-          <View style={styles.pickerBox}>
+          <View style={styles.pickerBoxTeam}>
             <View style={styles.pickerHeader}>
               <Text style={styles.pickerTitle}>Select Team</Text>
               <TouchableOpacity onPress={() => setShowTeamPicker(false)}>
@@ -532,6 +532,16 @@ const styles = StyleSheet.create({
     maxHeight: "70%",
     borderWidth: 1,
     borderColor: "#333",
+    paddingBottom: 40,
+  },
+  pickerBoxTeam: {
+    backgroundColor: "#1a1a1a",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: "70%",
+    borderWidth: 1,
+    borderColor: "#333",
+    paddingBottom: 120,
   },
   pickerHeader: {
     flexDirection: "row",
