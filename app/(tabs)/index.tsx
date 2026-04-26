@@ -24,7 +24,7 @@ import {
 } from "../../lib/gameapi";
 import { supabase } from "../../lib/supabase";
 import { getCentroid, isNearPolygon, parseWKT } from "../../utils/wktParser";
-import { styles } from "./index.styles";
+import { styles } from "../styles/index.styles";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
