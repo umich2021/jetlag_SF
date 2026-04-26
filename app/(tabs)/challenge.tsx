@@ -1,13 +1,13 @@
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { supabase } from "../../lib/supabase";
 
@@ -22,6 +22,8 @@ type Challenge = {
   released_to_team_id: string | null;
   is_completed: boolean;
   completed_by_team_id: string | null;
+  display_id: string | null; // ← add this
+  is_hidden: boolean;
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -49,42 +51,27 @@ export default function ChallengeScreen() {
   async function loadChallenges() {
     setLoading(true);
 
-    // Query 1: get computed rewards from view
-    const { data: rewards, error: rewardsError } = await supabase
+    const { data: rewards } = await supabase
       .from("challenge_rewards")
       .select("id, title, base_reward, final_reward");
 
-    if (rewardsError) {
-      console.log("rewards error:", JSON.stringify(rewardsError));
-      setLoading(false);
-      return;
-    }
-
-    // Query 2: get full challenge details
-    const { data: details, error: detailsError } = await supabase
+    const { data: details } = await supabase
       .from("challenges")
       .select(
-        "id, description, type, is_released, released_to_team_id, is_completed, completed_by_team_id",
+        "id, display_id, description, type, is_hidden, is_completed, completed_by_team_id",
       );
 
-    if (detailsError) {
-      console.log("details error:", JSON.stringify(detailsError));
-      setLoading(false);
-      return;
-    }
-
-    // Merge by id
     const flat: Challenge[] = (rewards ?? []).map((r: any) => {
       const detail = (details ?? []).find((d: any) => d.id === r.id);
       return {
         id: r.id,
+        display_id: detail?.display_id ?? null,
         title: r.title,
         base_reward: r.base_reward,
         final_reward: r.final_reward,
         description: detail?.description ?? "",
         type: detail?.type ?? "fixed",
-        is_released: detail?.is_released ?? false,
-        released_to_team_id: detail?.released_to_team_id ?? null,
+        is_hidden: detail?.is_hidden ?? false,
         is_completed: detail?.is_completed ?? false,
         completed_by_team_id: detail?.completed_by_team_id ?? null,
       };
@@ -122,8 +109,6 @@ export default function ChallengeScreen() {
 
   // ── Render item ────────────────────────────────────────────────────────────
   const renderChallenge = ({ item }: { item: Challenge }) => {
-    const isMyChallenge =
-      item.is_released && item.released_to_team_id === params.teamId;
     const isCompleted = item.is_completed;
     const typeLabel = TYPE_LABELS[item.type] ?? item.type;
 
@@ -131,16 +116,9 @@ export default function ChallengeScreen() {
       <View
         style={[
           styles.challengeRow,
-          isMyChallenge &&
-            !isCompleted && {
-              backgroundColor: "#1e2a3a",
-              borderColor: params.teamColor ?? "#4a9eff",
-              borderWidth: 1.5,
-            },
           isCompleted && styles.challengeRowCompleted,
         ]}
       >
-        {/* Title row */}
         <View style={styles.challengeHeader}>
           <Text
             style={[
@@ -148,7 +126,7 @@ export default function ChallengeScreen() {
               isCompleted && styles.challengeTitleStrikethrough,
             ]}
           >
-            {item.title}
+            {item.display_id ? `${item.display_id}` : item.title}
           </Text>
           <View style={styles.rewardPill}>
             <Text style={styles.rewardText}>
@@ -158,14 +136,10 @@ export default function ChallengeScreen() {
           </View>
         </View>
 
-        {/* Description — only shown if released to this team */}
-        {isMyChallenge && !isCompleted && (
+        {/* Description — visible unless admin hid it */}
+        {!item.is_hidden && !isCompleted && (
           <View style={styles.descriptionBox}>
-            <Text style={styles.challengeName}>{item.title}</Text>
-            <Text style={styles.challengeType}>
-              Type-{typeLabel}
-              {item.type === "variable" ? "/Variable" : ""}
-            </Text>
+            <Text style={styles.challengeType}>Type-{typeLabel}</Text>
             <Text style={styles.descriptionText}>{item.description}</Text>
           </View>
         )}

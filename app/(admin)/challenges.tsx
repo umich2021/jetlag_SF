@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    adminApproveChallenge,
-    adminFailChallenge,
-    adminReleaseChallenge,
-    getTeams,
+  adminApproveChallenge,
+  adminFailChallenge,
+  adminReleaseChallenge,
+  getTeams,
 } from "../../lib/gameapi";
 import { supabase } from "../../lib/supabase";
 
@@ -32,6 +34,8 @@ type Challenge = {
   is_completed: boolean;
   completed_by_team_id: string | null;
   failed_count: number;
+  display_id: string | null;
+  is_hidden: boolean;
 };
 
 type Team = { id: string; name: string; color: string };
@@ -43,8 +47,8 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const STATUS_BADGE: Record<string, { label: string; color: string }> = {
-  unreleased: { label: "Unreleased", color: "#555" },
-  released: { label: "Released", color: "#ff6b35" },
+  active: { label: "Active", color: "#378ADD" },
+  hidden: { label: "Hidden", color: "#555" },
   completed: { label: "Completed", color: "#639922" },
 };
 
@@ -92,7 +96,7 @@ export default function AdminChallengesScreen() {
     const { data: details } = await supabase
       .from("challenges")
       .select(
-        "id, description, type, is_released, released_to_team_id, is_completed, completed_by_team_id",
+        "id, display_id, is_hidden, description, type, is_released, released_to_team_id, is_completed, completed_by_team_id",
       );
 
     const { data: teamData } = await supabase
@@ -117,6 +121,8 @@ export default function AdminChallengesScreen() {
         released_to_team: releasedTeam,
         is_completed: detail?.is_completed ?? false,
         completed_by_team_id: detail?.completed_by_team_id ?? null,
+        display_id: detail?.display_id ?? null,
+        is_hidden: detail?.is_hidden ?? false,
       };
     });
 
@@ -134,8 +140,8 @@ export default function AdminChallengesScreen() {
 
   function getStatus(c: Challenge) {
     if (c.is_completed) return "completed";
-    if (c.is_released) return "released";
-    return "unreleased";
+    if (c.is_hidden) return "hidden";
+    return "active";
   }
 
   function openModal(challenge: Challenge) {
@@ -155,7 +161,21 @@ export default function AdminChallengesScreen() {
     setSelectedChallenge(null);
     loadChallenges();
   }
-
+  async function handleToggleHide() {
+    if (!selectedChallenge) return;
+    setActioning(true);
+    const { error } = await supabase
+      .from("challenges")
+      .update({ is_hidden: !selectedChallenge.is_hidden })
+      .eq("id", selectedChallenge.id);
+    setActioning(false);
+    if (error) {
+      Alert.alert("Error", String(error));
+      return;
+    }
+    setSelectedChallenge(null);
+    loadChallenges();
+  }
   async function handleApprove() {
     if (!selectedChallenge) return;
     const reward = parseInt(editedReward);
@@ -214,14 +234,10 @@ export default function AdminChallengesScreen() {
         onPress={() => openModal(item)}
       >
         <View style={styles.challengeHeader}>
-          <Text
-            style={[
-              styles.challengeTitle,
-              item.is_completed && styles.strikethrough,
-            ]}
-          >
-            {item.title}
+          <Text style={styles.challengeTitle}>
+            {item.display_id ?? "NA"} · {item.title}
           </Text>
+
           <View style={[styles.badge, { backgroundColor: badge.color }]}>
             <Text style={styles.badgeText}>{badge.label}</Text>
           </View>
@@ -238,19 +254,19 @@ export default function AdminChallengesScreen() {
           )}
         </View>
 
-        {item.is_released && item.released_to_team && (
-          <View style={styles.releasedTo}>
-            <View
-              style={[
-                styles.teamDot,
-                { backgroundColor: item.released_to_team.color },
-              ]}
-            />
-            <Text style={styles.releasedToText}>
-              Released to {item.released_to_team.name}
-            </Text>
-          </View>
-        )}
+        {/* {item.is_released && item.released_to_team && (
+          // <View style={styles.releasedTo}>
+          //   <View
+          //     style={[
+          //       styles.teamDot,
+          //       { backgroundColor: item.released_to_team.color },
+          //     ]}
+          //   />
+          //   <Text style={styles.releasedToText}>
+          //     Released to {item.released_to_team.name}
+          //   </Text>
+          // </View>
+        )} */}
       </TouchableOpacity>
     );
   };
@@ -284,98 +300,104 @@ export default function AdminChallengesScreen() {
         animationType="slide"
         onRequestClose={() => setSelectedChallenge(null)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <TouchableOpacity
-              style={styles.modalClose}
-              onPress={() => setSelectedChallenge(null)}
-            >
-              <Text style={styles.modalCloseText}>✕</Text>
-            </TouchableOpacity>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end" }}
+          >
+            <View style={styles.modalBox}>
+              <TouchableOpacity
+                style={styles.modalClose}
+                onPress={() => setSelectedChallenge(null)}
+              >
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
 
-            <Text style={styles.modalTitle}>{selectedChallenge?.title}</Text>
-            <Text style={styles.modalDescription}>
-              {selectedChallenge?.description}
-            </Text>
-
-            <View style={styles.modalDivider} />
-
-            {/* Release section — only if not yet released */}
-            {!selectedChallenge?.is_released &&
-              !selectedChallenge?.is_completed && (
-                <>
-                  <Text style={styles.modalSectionLabel}>Release to team</Text>
-                  {teams.map((team) => (
-                    <TouchableOpacity
-                      key={team.id}
-                      style={styles.teamBtn}
-                      onPress={() => handleRelease(team.id)}
-                      disabled={actioning}
-                    >
-                      <View
-                        style={[
-                          styles.teamDot,
-                          { backgroundColor: team.color },
-                        ]}
-                      />
-                      <Text style={styles.teamBtnText}>{team.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </>
-              )}
-
-            {/* Approve/fail section — only if released and not completed */}
-            {selectedChallenge?.is_released &&
-              !selectedChallenge?.is_completed && (
-                <>
-                  <Text style={styles.modalSectionLabel}>Coin reward</Text>
-                  <View style={styles.rewardRow}>
-                    <TextInput
-                      style={styles.rewardInput}
-                      value={editedReward}
-                      onChangeText={setEditedReward}
-                      keyboardType="number-pad"
-                      placeholderTextColor="#666"
-                    />
-                    <Text style={styles.rewardLabel}>
-                      coins (default: {selectedChallenge?.final_reward})
-                    </Text>
-                  </View>
-
-                  <View style={styles.actionRow}>
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.approveBtn]}
-                      onPress={handleApprove}
-                      disabled={actioning}
-                    >
-                      {actioning ? (
-                        <ActivityIndicator color="#fff" />
-                      ) : (
-                        <Text style={styles.actionBtnText}>✅ Approve</Text>
-                      )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.failBtn]}
-                      onPress={handleFail}
-                      disabled={actioning}
-                    >
-                      {actioning ? (
-                        <ActivityIndicator color="#fff" />
-                      ) : (
-                        <Text style={styles.actionBtnText}>❌ Fail</Text>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </>
-              )}
-
-            {selectedChallenge?.is_completed && (
-              <Text style={styles.completedText}>
-                This challenge has been completed.
+              <Text style={styles.modalTitle}>{selectedChallenge?.title}</Text>
+              <Text style={styles.modalDescription}>
+                {selectedChallenge?.description}
               </Text>
-            )}
-          </View>
-        </View>
+
+              <View style={styles.modalDivider} />
+
+              {/* Release section — only if not yet released */}
+              {!selectedChallenge?.is_completed && (
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    {
+                      backgroundColor: selectedChallenge?.is_hidden
+                        ? "#2d5a1b"
+                        : "#555",
+                      marginBottom: 12,
+                    },
+                  ]}
+                  onPress={handleToggleHide}
+                  disabled={actioning}
+                >
+                  <Text style={styles.actionBtnText}>
+                    {selectedChallenge?.is_hidden
+                      ? "👁 Show Description"
+                      : "🙈 Hide Description"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Approve/fail section — only if released and not completed */}
+              {selectedChallenge?.is_released &&
+                !selectedChallenge?.is_completed && (
+                  <>
+                    <Text style={styles.modalSectionLabel}>Coin reward</Text>
+                    <View style={styles.rewardRow}>
+                      <TextInput
+                        style={styles.rewardInput}
+                        value={editedReward}
+                        onChangeText={setEditedReward}
+                        keyboardType="number-pad"
+                        placeholderTextColor="#666"
+                      />
+                      <Text style={styles.rewardLabel}>
+                        coins (default: {selectedChallenge?.final_reward})
+                      </Text>
+                    </View>
+
+                    <View style={styles.actionRow}>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.approveBtn]}
+                        onPress={handleApprove}
+                        disabled={actioning}
+                      >
+                        {actioning ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <Text style={styles.actionBtnText}>✅ Approve</Text>
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.failBtn]}
+                        onPress={handleFail}
+                        disabled={actioning}
+                      >
+                        {actioning ? (
+                          <ActivityIndicator color="#fff" />
+                        ) : (
+                          <Text style={styles.actionBtnText}>❌ Fail</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+
+              {selectedChallenge?.is_completed && (
+                <Text style={styles.completedText}>
+                  This challenge has been completed.
+                </Text>
+              )}
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
