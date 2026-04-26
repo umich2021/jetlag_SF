@@ -63,8 +63,7 @@ export default function LoginScreen() {
     >
       <View style={styles.inner}>
         {/* Header */}
-        <Text style={styles.icon}>🚆</Text>
-        <Text style={styles.title}>SF Control</Text>
+        <Text style={styles.title}>Muni Mayhem</Text>
         <Text style={styles.subtitle}>Enter your team credentials</Text>
 
         {/* Inputs */}
@@ -84,7 +83,7 @@ export default function LoginScreen() {
           <TextInput
             style={styles.input}
             placeholder="••••••••"
-            placeholderTextColor="#666"
+            placeholderTextColor="#fff"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -116,7 +115,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f0f0f",
+    backgroundColor: "#ea823e",
   },
   inner: {
     flex: 1,
@@ -139,7 +138,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: "#666",
+    color: "#fff",
     textAlign: "center",
     marginTop: 6,
     marginBottom: 40,
@@ -152,20 +151,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#888",
+    color: "#fff",
     letterSpacing: 0.8,
     textTransform: "uppercase",
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#d4966d",
     borderWidth: 1,
-    borderColor: "#2a2a2a",
+    borderColor: "#ede3d3",
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: "#fff",
+    color: "#ede3d3",
     marginBottom: 20,
   },
 

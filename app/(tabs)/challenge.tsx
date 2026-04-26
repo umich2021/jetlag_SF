@@ -189,7 +189,7 @@ export default function ChallengeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0f0f0f",
+    backgroundColor: "#d4966d",
   },
 
   // Header
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === "ios" ? 56 : 16,
     paddingBottom: 8,
     paddingHorizontal: 16,
-    backgroundColor: "#0f0f0f",
+    backgroundColor: "#eb7900",
   },
   headerTitle: {
     fontSize: 28,
@@ -212,14 +212,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   searchInput: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#eb7900",
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
     color: "#fff",
     borderWidth: 1,
-    borderColor: "#2a2a2a",
+    borderColor: "#fff",
   },
 
   // List
@@ -236,11 +236,11 @@ const styles = StyleSheet.create({
 
   // Challenge row
   challengeRow: {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#ea823e",
     borderRadius: 10,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#2a2a2a",
+    borderColor: "#ede3d3",
   },
   challengeRowCompleted: {
     opacity: 0.4,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   challengeTitleStrikethrough: {
     textDecorationLine: "line-through",
-    color: "#666",
+    color: "#000",
   },
 
   // Reward pill
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#2a2a2a",
+    backgroundColor: "#eb7900",
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   rewardText: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#ccc",
+    color: "#fff",
   },
   coinIcon: {
     fontSize: 13,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   // Description box (shown when challenge released to this team)
   descriptionBox: {
     marginTop: 12,
-    backgroundColor: "#252525",
+    backgroundColor: "#eb7900",
     borderRadius: 8,
     padding: 12,
   },
@@ -295,12 +295,12 @@ const styles = StyleSheet.create({
   },
   challengeType: {
     fontSize: 12,
-    color: "#888",
+    color: "#fff",
     marginBottom: 8,
   },
   descriptionText: {
     fontSize: 14,
-    color: "#ccc",
+    color: "#fff",
     lineHeight: 20,
   },
 });

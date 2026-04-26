@@ -14,10 +14,9 @@ import {
   View,
 } from "react-native";
 import {
-  adminApproveChallenge,
   adminFailChallenge,
   adminReleaseChallenge,
-  getTeams,
+  getTeams
 } from "../../lib/gameapi";
 import { supabase } from "../../lib/supabase";
 
@@ -155,7 +154,7 @@ export default function AdminChallengesScreen() {
     const { error } = await adminReleaseChallenge(selectedChallenge.id, teamId);
     setActioning(false);
     if (error) {
-      Alert.alert("Error", String(error));
+      Alert.alert("Error", (error as any)?.message ?? JSON.stringify(error));
       return;
     }
     setSelectedChallenge(null);
@@ -170,7 +169,7 @@ export default function AdminChallengesScreen() {
       .eq("id", selectedChallenge.id);
     setActioning(false);
     if (error) {
-      Alert.alert("Error", String(error));
+      Alert.alert("Error", (error as any)?.message ?? JSON.stringify(error));
       return;
     }
     setSelectedChallenge(null);
@@ -178,31 +177,14 @@ export default function AdminChallengesScreen() {
   }
   async function handleApprove() {
     if (!selectedChallenge) return;
-    const reward = parseInt(editedReward);
-    if (isNaN(reward) || reward <= 0) {
-      Alert.alert("Invalid", "Enter a valid coin reward.");
-      return;
-    }
-
     setActioning(true);
-
-    // If reward was edited, update it first
-    if (reward !== selectedChallenge.final_reward) {
-      await supabase.from("teams").update({
-        coins_balance: supabase.rpc("admin_adjust_coins", {
-          p_team_id: selectedChallenge.released_to_team_id,
-          p_amount: reward,
-        }),
-      });
-    }
-
-    const { error } = await adminApproveChallenge(
-      selectedChallenge.id,
-      selectedChallenge.released_to_team_id!,
-    );
+    const { error } = await supabase
+      .from("challenges")
+      .update({ is_completed: true })
+      .eq("id", selectedChallenge.id);
     setActioning(false);
     if (error) {
-      Alert.alert("Error", String(error));
+      Alert.alert("Error", error.message);
       return;
     }
     setSelectedChallenge(null);
@@ -218,7 +200,7 @@ export default function AdminChallengesScreen() {
     );
     setActioning(false);
     if (error) {
-      Alert.alert("Error", String(error));
+      Alert.alert("Error", (error as any)?.message ?? JSON.stringify(error));
       return;
     }
     setSelectedChallenge(null);
@@ -346,49 +328,49 @@ export default function AdminChallengesScreen() {
               )}
 
               {/* Approve/fail section — only if released and not completed */}
-              {selectedChallenge?.is_released &&
-                !selectedChallenge?.is_completed && (
-                  <>
-                    <Text style={styles.modalSectionLabel}>Coin reward</Text>
-                    <View style={styles.rewardRow}>
-                      <TextInput
-                        style={styles.rewardInput}
-                        value={editedReward}
-                        onChangeText={setEditedReward}
-                        keyboardType="number-pad"
-                        placeholderTextColor="#666"
-                      />
-                      <Text style={styles.rewardLabel}>
-                        coins (default: {selectedChallenge?.final_reward})
-                      </Text>
-                    </View>
+              {/* Approve/fail section — if not completed */}
+              {!selectedChallenge?.is_completed && (
+                <>
+                  <Text style={styles.modalSectionLabel}>Coin reward</Text>
+                  <View style={styles.rewardRow}>
+                    <TextInput
+                      style={styles.rewardInput}
+                      value={editedReward}
+                      onChangeText={setEditedReward}
+                      keyboardType="number-pad"
+                      placeholderTextColor="#666"
+                    />
+                    <Text style={styles.rewardLabel}>
+                      coins (default: {selectedChallenge?.final_reward})
+                    </Text>
+                  </View>
 
-                    <View style={styles.actionRow}>
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.approveBtn]}
-                        onPress={handleApprove}
-                        disabled={actioning}
-                      >
-                        {actioning ? (
-                          <ActivityIndicator color="#fff" />
-                        ) : (
-                          <Text style={styles.actionBtnText}>✅ Approve</Text>
-                        )}
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.failBtn]}
-                        onPress={handleFail}
-                        disabled={actioning}
-                      >
-                        {actioning ? (
-                          <ActivityIndicator color="#fff" />
-                        ) : (
-                          <Text style={styles.actionBtnText}>❌ Fail</Text>
-                        )}
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                )}
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.approveBtn]}
+                      onPress={handleApprove}
+                      disabled={actioning}
+                    >
+                      {actioning ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.actionBtnText}>✅ Approve</Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.failBtn]}
+                      onPress={handleFail}
+                      disabled={actioning}
+                    >
+                      {actioning ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.actionBtnText}>❌ Fail</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
 
               {selectedChallenge?.is_completed && (
                 <Text style={styles.completedText}>

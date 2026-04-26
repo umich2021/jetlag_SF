@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: "#eb7900",
     paddingTop: Platform.OS === "ios" ? 56 : 16,
     paddingBottom: 12,
     paddingHorizontal: 16,
@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#111",
+    color: "#fff",
     letterSpacing: -0.3,
     flex: 1,
   },

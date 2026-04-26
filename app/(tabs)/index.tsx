@@ -57,6 +57,7 @@ type Challenge = {
   coordinate_lat: number;
   coordinate_lng: number;
   is_completed: boolean;
+  is_hidden: boolean;
 };
 
 type DepositModal = {
@@ -150,7 +151,7 @@ export default function MapScreen() {
     const { data } = await supabase
       .from("challenges")
       .select(
-        "id, title, type, base_reward, coordinate_lat, coordinate_lng, is_completed",
+        "id, title, type, base_reward, coordinate_lat, coordinate_lng, is_completed,is_hidden",
       )
       .eq("is_completed", false);
     if (data) setChallenges(data as Challenge[]);
@@ -431,7 +432,9 @@ export default function MapScreen() {
 
             {/* Challenge pins */}
             {challenges
-              .filter((c) => c.coordinate_lat && c.coordinate_lng)
+              .filter(
+                (c) => c.coordinate_lat && c.coordinate_lng && !c.is_hidden,
+              )
               .map((challenge) => (
                 <Marker
                   key={challenge.id}
